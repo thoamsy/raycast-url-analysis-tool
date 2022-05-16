@@ -107,6 +107,8 @@ export default function Command() {
     fromCache: false,
   });
 
+  // const [refreshKey, setRefreshKey] = useState(0)
+
   useEffect(() => {
     if (!pastedURL) {
       return;
@@ -140,6 +142,16 @@ export default function Command() {
               title="Go to Edit"
               target={<EditURL urlString={contentInClipboard} setURL={setContentInClipboard} />}
               shortcut={{ modifiers: ["cmd"], key: "]" }}
+            />
+          ) : null}
+          {pastedURL ? (
+            <Action
+              icon={Icon.TwoArrowsClockwise}
+              title="Re-fetch URL"
+              shortcut={{ modifiers: ["cmd"], key: "r" }}
+              onAction={() => {
+                crawleURL(contentInClipboard, (value) => setOgProperty({ ...value, fromCache: false }));
+              }}
             />
           ) : null}
           <Action
