@@ -152,13 +152,16 @@ export default function Command() {
         </ActionPanel>
       }
       metadata={
-        urlEntires ? (
-          <Detail.Metadata>
-            {urlEntires?.map((entries) => (
-              <Detail.Metadata.Label key={entries[0]} title={entries[0]} text={entries[1]} />
-            ))}
-          </Detail.Metadata>
-        ) : null
+        <Detail.Metadata>
+          <Detail.Metadata.Label title="Title" text={ogProperty.title} />
+          <Detail.Metadata.Label title="Description" text={ogProperty.desc || "--"} />
+          <Detail.Metadata.Separator />
+          {urlEntires
+            ? urlEntires?.map((entries) => (
+                <Detail.Metadata.Label key={entries[0]} title={entries[0]} text={entries[1]} />
+              ))
+            : null}
+        </Detail.Metadata>
       }
       markdown={pastedURL ? markdown({ url: contentInClipboard, ...ogProperty }) : "No URL found in clipboard"}
     />
