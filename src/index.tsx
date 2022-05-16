@@ -166,15 +166,25 @@ export default function Command() {
       }
       metadata={
         <Detail.Metadata>
+          <Detail.Metadata.TagList title="Category">
+            <Detail.Metadata.TagList.Item text="Meta" color="#eed535" />
+          </Detail.Metadata.TagList>
           {ogProperty.title ? <Detail.Metadata.Label title="Title" text={ogProperty.title} /> : null}
           {ogProperty.desc ? <Detail.Metadata.Label title="Description" text={ogProperty.desc} /> : null}
           {/* 不能想下面这么写，看上去是这个渲染机制有 bug */}
           {/* <Detail.Metadata.Label title="Description" text={ogProperty.desc ?? "--"} /> */}
-          <Detail.Metadata.Separator />
 
-          {urlEntires?.map((entries) => (
-            <Detail.Metadata.Label key={entries[0]} title={entries[0]} text={entries[1]} />
-          ))}
+          {pastedURL ? (
+            <>
+              <Detail.Metadata.Separator />
+              <Detail.Metadata.TagList title="Category">
+                <Detail.Metadata.TagList.Item text="Query" color="#28d930" />
+              </Detail.Metadata.TagList>
+              {urlEntires?.map((entries) => (
+                <Detail.Metadata.Label key={entries[0]} title={entries[0]} text={entries[1]} />
+              ))}
+            </>
+          ) : null}
         </Detail.Metadata>
       }
       markdown={pastedURL ? markdown({ url: contentInClipboard, ...ogProperty }) : "No URL found in clipboard"}
