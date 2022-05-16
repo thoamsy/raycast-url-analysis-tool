@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Detail,
+  LocalStorage,
   Clipboard,
   ActionPanel,
   Action,
@@ -80,6 +81,12 @@ function EditURL({ urlString, setURL }: { urlString: string; setURL: (url: strin
   );
 }
 
+type OGProperty = {
+  title: string;
+  desc: string;
+  img: string;
+};
+
 export default function Command() {
   const [contentInClipboard, setContentInClipboard] = useState("");
 
@@ -93,41 +100,33 @@ export default function Command() {
 
   const { pastedURL, urlEntires } = useURL(contentInClipboard);
 
-  const [ogProperty, setOgProperty] = useState({
+  const [ogProperty, setOgProperty] = useState<OGProperty & { fromCache: boolean }>({
     title: "",
     desc: "",
     img: "",
+    fromCache: false,
   });
 
   useEffect(() => {
-    if (pastedURL) {
-      const toast = showToast({
-        title: "Fetching...",
-        style: Toast.Style.Animated,
-      });
-
-      fetch(pastedURL.toString(), {
-        headers: {
-          "User-Agent": "facebookexternalhit/1.1",
-        },
-      })
-        .then((url) => url.text())
-        .then(async (html) => {
-          const $ = cheerio.load(html);
-          const title = $("meta[property='og:title']").attr("content") || "";
-          const desc = $("meta[property='og:description']").attr("content") || "";
-          const img = $("meta[property='og:image']").attr("content") || "";
-
-          console.log(title, desc, img);
-          setOgProperty({
-            title,
-            desc,
-            img,
-          });
-
-          (await toast).hide();
-        });
+    if (!pastedURL) {
+      return;
     }
+
+    const urlString = pastedURL.toString();
+
+    async function readOGCache() {
+      const property = await LocalStorage.getItem(`og-property-${urlString}`);
+      if (typeof property === "string") {
+        try {
+          setOgProperty({ ...JSON.parse(property), fromCache: true });
+        } catch {
+          crawleURL(urlString, (value) => setOgProperty({ ...value, fromCache: true }));
+        }
+      } else {
+        crawleURL(urlString, (value) => setOgProperty({ ...value, fromCache: true }));
+      }
+    }
+    readOGCache();
   }, [pastedURL]);
 
   return (
@@ -164,6 +163,33 @@ export default function Command() {
       markdown={pastedURL ? markdown({ url: contentInClipboard, ...ogProperty }) : "No URL found in clipboard"}
     />
   );
+}
+
+function crawleURL(url: string, onCrawler: (value: OGProperty) => void) {
+  const toast = showToast({
+    title: "Fetching...",
+    style: Toast.Style.Animated,
+  });
+
+  return fetch(url, {
+    headers: {
+      "User-Agent": "facebookexternalhit/1.1",
+    },
+  })
+    .then((url) => url.text())
+    .then(async (html) => {
+      const $ = cheerio.load(html);
+      const title = $("meta[property='og:title']").attr("content") || "";
+      const desc = $("meta[property='og:description']").attr("content") || "";
+      const img = $("meta[property='og:image']").attr("content") || "";
+
+      onCrawler({ title, desc, img });
+      if (title) {
+        LocalStorage.setItem(`og-property-${url}`, JSON.stringify({ title, desc, img }));
+      }
+
+      (await toast).hide();
+    });
 }
 
 function markdown({ url, title, desc, img }: { url: string; title: string; desc?: string; img?: string }) {
