@@ -120,10 +120,10 @@ export default function Command() {
         try {
           setOgProperty({ ...JSON.parse(property), fromCache: true });
         } catch {
-          crawleURL(urlString, (value) => setOgProperty({ ...value, fromCache: true }));
+          crawleURL(urlString, (value) => setOgProperty({ ...value, fromCache: false }));
         }
       } else {
-        crawleURL(urlString, (value) => setOgProperty({ ...value, fromCache: true }));
+        crawleURL(urlString, (value) => setOgProperty({ ...value, fromCache: false }));
       }
     }
     readOGCache();
@@ -131,6 +131,7 @@ export default function Command() {
 
   return (
     <Detail
+      navigationTitle={ogProperty.title}
       actions={
         <ActionPanel>
           {pastedURL ? (
@@ -153,14 +154,15 @@ export default function Command() {
       }
       metadata={
         <Detail.Metadata>
-          <Detail.Metadata.Label title="Title" text={ogProperty.title} />
-          <Detail.Metadata.Label title="Description" text={ogProperty.desc || "--"} />
+          {ogProperty.title ? <Detail.Metadata.Label title="Title" text={ogProperty.title} /> : null}
+          {ogProperty.desc ? <Detail.Metadata.Label title="Description" text={ogProperty.desc} /> : null}
+          {/* 不能想下面这么写，看上去是这个渲染机制有 bug */}
+          {/* <Detail.Metadata.Label title="Description" text={ogProperty.desc ?? "--"} /> */}
           <Detail.Metadata.Separator />
-          {urlEntires
-            ? urlEntires?.map((entries) => (
-                <Detail.Metadata.Label key={entries[0]} title={entries[0]} text={entries[1]} />
-              ))
-            : null}
+
+          {urlEntires?.map((entries) => (
+            <Detail.Metadata.Label key={entries[0]} title={entries[0]} text={entries[1]} />
+          ))}
         </Detail.Metadata>
       }
       markdown={pastedURL ? markdown({ url: contentInClipboard, ...ogProperty }) : "No URL found in clipboard"}
