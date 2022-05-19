@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  Alert,
   LocalStorage,
   Clipboard,
   ActionPanel,
@@ -11,6 +12,7 @@ import {
   Toast,
   showToast,
   List,
+  confirmAlert,
 } from "@raycast/api";
 import fetch from "node-fetch";
 import cheerio from "cheerio";
@@ -90,12 +92,12 @@ type OGProperty = {
   title: string;
   desc: string;
   img: string;
+  favicon?: string;
 };
 
 export function URLDetail({
   isFetching,
   urlString,
-  setURLString,
   ogProperty,
 }: Props & { isFetching: boolean; ogProperty: OGProperty }) {
   const { pastedURL, urlEntires } = useURL(urlString);
@@ -148,8 +150,9 @@ function crawleURL(url: string, onCrawler: (value: OGProperty) => void) {
       const title = $("meta[property='og:title']").attr("content") || "";
       const desc = $("meta[property='og:description']").attr("content") || "";
       const img = $("meta[property='og:image']").attr("content") || "";
+      const favicon = $("link[rel='icon']").attr("href");
 
-      onCrawler({ title, desc, img });
+      onCrawler({ title, desc, img, favicon });
       if (title) {
         LocalStorage.setItem(`og-property-${url}`, JSON.stringify({ title, desc, img }));
       }
@@ -158,7 +161,12 @@ function crawleURL(url: string, onCrawler: (value: OGProperty) => void) {
     });
 }
 
-export function URLItem({ urlString, setURLString }: Props) {
+export function URLItem({
+  urlString,
+  setURLString,
+  appendURL,
+  onDelete,
+}: Props & { appendURL: (value: string) => void; onDelete: () => void }) {
   const [isFetching, setIsFetching] = useState(false);
 
   const startCrawler = () => {
@@ -197,6 +205,11 @@ export function URLItem({ urlString, setURLString }: Props) {
 
   return (
     <List.Item
+      accessories={[
+        {
+          icon: ogProperty.favicon,
+        },
+      ]}
       title={urlString}
       detail={
         <URLDetail ogProperty={ogProperty} isFetching={isFetching} urlString={urlString} setURLString={setURLString} />
@@ -212,11 +225,38 @@ export function URLItem({ urlString, setURLString }: Props) {
             />
           )}
           <Action
+            title="Paste URL"
+            icon={Icon.Clipboard}
+            onAction={async () => {
+              const value = (await Clipboard.readText()) || "";
+              if (isURL(value)) {
+                appendURL(value);
+              }
+            }}
+            shortcut={{ modifiers: ["cmd"], key: "n" }}
+          />
+          <Action
             icon={Icon.TwoArrowsClockwise}
             title="Re-fetch URL"
             shortcut={{ modifiers: ["cmd"], key: "r" }}
             onAction={() => {
               startCrawler();
+            }}
+          />
+          <Action
+            icon={Icon.Trash}
+            title="Delete the URL"
+            shortcut={{ key: "delete", modifiers: ["cmd", "opt"] }}
+            onAction={() => {
+              confirmAlert({
+                title: "Are you sure?",
+                icon: Icon.Trash,
+                primaryAction: {
+                  title: "Delete it",
+                  onAction: onDelete,
+                  style: Alert.ActionStyle.Destructive,
+                },
+              });
             }}
           />
         </ActionPanel>
@@ -225,8 +265,20 @@ export function URLItem({ urlString, setURLString }: Props) {
   );
 }
 
-function markdown({ url, title, desc, img }: { url: string; title: string; desc?: string; img?: string }) {
+function markdown({ img }: { url: string; title: string; desc?: string; img?: string }) {
   return `
 ${img ? `![](${img})` : ""}
   `;
+}
+
+export function isURL(url?: string) {
+  if (!url?.startsWith("http")) {
+    return false;
+  }
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
 }

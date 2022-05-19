@@ -18,17 +18,29 @@ export const useListData = () => {
     readList();
   }, []);
 
-  const appendList = (data: URLData) => {
+  const prependList = (data: URLData) => {
     setList((list) => {
-      const res = list.concat(data);
+      const res = [data].concat(list);
       LocalStorage.setItem(key, JSON.stringify(res));
       return res;
     });
   };
 
   const editURLInList = (data: URLData) => {
-    setList((list) => list.map((item) => (item.id == data.id ? data : item)));
+    setList((list) => {
+      const res = list.map((item) => (item.id == data.id ? data : item));
+      LocalStorage.setItem(key, JSON.stringify(res));
+      return res;
+    });
   };
 
-  return [list, appendList, editURLInList] as [URLList, (data: URLData) => void, (data: URLData) => void];
+  const deleteItemInList = (deletedURLID: number) => {
+    setList((list) => {
+      const res = list.filter((item) => item.id !== deletedURLID);
+      LocalStorage.setItem(key, JSON.stringify(res));
+      return res;
+    });
+  };
+
+  return { list, prependList, editURLInList, deleteList: deleteItemInList };
 };

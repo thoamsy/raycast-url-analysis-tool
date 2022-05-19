@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { List, Action, ActionPanel, Clipboard } from "@raycast/api";
 import { useListData } from "./use-list-data";
 import { URLItem } from "./detail";
@@ -24,7 +24,7 @@ const EmptyCase = ({ setContentInClipboard }: { setContentInClipboard: (value: s
 const newID = () => Date.now();
 
 export const URLList = () => {
-  const [list, setList, editURLInList] = useListData();
+  const { list, prependList, deleteList, editURLInList } = useListData();
   const [contentInClipboard, setContentInClipboard] = useState("");
 
   const updateListURL = (id: number) => (newValue: string) => {
@@ -35,15 +35,27 @@ export const URLList = () => {
   };
 
   return (
-    <List isShowingDetail={list.length > 0}>
+    <List navigationTitle="Your urls" enableFiltering isShowingDetail={list.length > 0}>
       {list.length ? (
-        list.map((item) => <URLItem urlString={item.urlString} key={item.id} setURLString={updateListURL(item.id)} />)
+        list.map((item) => (
+          <URLItem
+            appendURL={(value) => {
+              prependList({
+                id: newID(),
+                urlString: value,
+              });
+            }}
+            onDelete={() => deleteList(item.id)}
+            urlString={item.urlString}
+            key={item.id}
+            setURLString={updateListURL(item.id)}
+          />
+        ))
       ) : (
         <EmptyCase
           setContentInClipboard={(value) => {
             setContentInClipboard(value);
-            console.log(value);
-            setList({
+            prependList({
               id: newID(),
               urlString: value,
             });
