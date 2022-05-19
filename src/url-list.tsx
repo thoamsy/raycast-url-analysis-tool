@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { List, Action, ActionPanel, Clipboard } from "@raycast/api";
+import { List, Action, ActionPanel, Clipboard, LocalStorage } from "@raycast/api";
 import { useListData } from "./use-list-data";
-import { URLItem } from "./detail";
+import { URLItem, isURL } from "./detail";
 
-const EmptyCase = ({ setContentInClipboard }: { setContentInClipboard: (value: string) => void }) => (
+const EmptyCase = ({ append }: { append: (value: string) => void }) => (
   <List.EmptyView
     actions={
       <ActionPanel>
@@ -11,8 +11,10 @@ const EmptyCase = ({ setContentInClipboard }: { setContentInClipboard: (value: s
           title="Paste URL"
           shortcut={{ modifiers: ["cmd"], key: "v" }}
           onAction={async () => {
-            const url = await Clipboard.readText();
-            setContentInClipboard(url || "");
+            const url = (await Clipboard.readText()) || "";
+            if (isURL(url)) {
+              append(url);
+            }
           }}
         />
       </ActionPanel>
@@ -25,7 +27,27 @@ const newID = () => Date.now();
 
 export const URLList = () => {
   const { list, prependList, deleteList, editURLInList } = useListData();
-  const [contentInClipboard, setContentInClipboard] = useState("");
+
+  const [showDetail, setShowDetail] = useState(true);
+
+  useEffect(() => {
+    async function f() {
+      const show = await LocalStorage.getItem("showDetail");
+      setShowDetail(!!show);
+    }
+    f();
+  }, []);
+  const toggleDetail = () => {
+    setShowDetail((c) => {
+      const nextValue = !c;
+      if (!nextValue) {
+        LocalStorage.removeItem("showDetail");
+      } else {
+        LocalStorage.setItem("showDetail", "1");
+      }
+      return nextValue;
+    });
+  };
 
   const updateListURL = (id: number) => (newValue: string) => {
     editURLInList({
@@ -35,7 +57,7 @@ export const URLList = () => {
   };
 
   return (
-    <List navigationTitle="Your urls" enableFiltering isShowingDetail={list.length > 0}>
+    <List navigationTitle="Your urls" enableFiltering isShowingDetail={list.length > 0 && showDetail}>
       {list.length ? (
         list.map((item) => (
           <URLItem
@@ -49,17 +71,18 @@ export const URLList = () => {
             urlString={item.urlString}
             key={item.id}
             setURLString={updateListURL(item.id)}
+            showDetail={showDetail}
+            toggleDetail={toggleDetail}
           />
         ))
       ) : (
         <EmptyCase
-          setContentInClipboard={(value) => {
-            setContentInClipboard(value);
+          append={(url) =>
             prependList({
               id: newID(),
-              urlString: value,
-            });
-          }}
+              urlString: url,
+            })
+          }
         />
       )}
     </List>

@@ -107,25 +107,21 @@ export function URLDetail({
       isLoading={isFetching}
       metadata={
         <List.Item.Detail.Metadata>
-          {/* <List.Item.Detail.Metadata.TagList title="Category">
-            <List.Item.Detail.Metadata.TagList.Item text="Meta" color="#eed535" />
-          </List.Item.Detail.Metadata.TagList> */}
-          <List.Item.Detail.Metadata.Label title="Category" text="Meta" />
+          {ogProperty.title ? <List.Item.Detail.Metadata.Label title="Meta" /> : null}
           {ogProperty.title ? <List.Item.Detail.Metadata.Label title="Title" text={ogProperty.title} /> : null}
           {ogProperty.desc ? <List.Item.Detail.Metadata.Label title="Description" text={ogProperty.desc} /> : null}
-          {/* 不能想下面这么写，看上去是这个渲染机制有 bug */}
-          {/* <List.Item.Detail.Metadata.Label title="Description" text={ogProperty.desc ?? "--"} /> */}
 
-          <List.Item.Detail.Metadata.Separator />
-          {/* <List.Item.Detail.Metadata.TagList title="Category">
-                <List.Item.Detail.Metadata.TagList.Item text="Query" color="#28d930" />
-              </List.Item.Detail.Metadata.TagList> */}
+          {urlEntires.length > 0 ? (
+            <>
+              <List.Item.Detail.Metadata.Separator />
 
-          <List.Item.Detail.Metadata.Label title="Category" icon={Icon.Binoculars} text="Query" />
+              <List.Item.Detail.Metadata.Label title="Category" icon={Icon.Binoculars} text="Query" />
 
-          {urlEntires?.map((entries) => (
-            <List.Item.Detail.Metadata.Label key={entries[0]} title={entries[0]} text={entries[1]} />
-          ))}
+              {urlEntires?.map((entries) => (
+                <List.Item.Detail.Metadata.Label key={entries[0]} title={entries[0]} text={entries[1]} />
+              ))}
+            </>
+          ) : null}
         </List.Item.Detail.Metadata>
       }
       markdown={pastedURL ? markdown({ url: urlString, ...ogProperty }) : "No URL found in clipboard"}
@@ -166,7 +162,14 @@ export function URLItem({
   setURLString,
   appendURL,
   onDelete,
-}: Props & { appendURL: (value: string) => void; onDelete: () => void }) {
+  showDetail,
+  toggleDetail,
+}: Props & {
+  showDetail: boolean;
+  toggleDetail: () => void;
+  appendURL: (value: string) => void;
+  onDelete: () => void;
+}) {
   const [isFetching, setIsFetching] = useState(false);
 
   const startCrawler = () => {
@@ -205,9 +208,15 @@ export function URLItem({
 
   return (
     <List.Item
+      icon={Icon.Link}
       accessories={[
         {
+          text: !showDetail ? ogProperty.desc : "",
+        },
+        {
           icon: ogProperty.favicon,
+          text: ogProperty.title,
+          tooltip: urlString,
         },
       ]}
       title={urlString}
@@ -225,6 +234,14 @@ export function URLItem({
             />
           )}
           <Action
+            icon={Icon.TwoArrowsClockwise}
+            title="Re-fetch URL"
+            shortcut={{ modifiers: ["cmd"], key: "r" }}
+            onAction={startCrawler}
+          />
+          <Action.OpenInBrowser shortcut={{ modifiers: ["cmd"], key: "o" }} url={urlString} />
+          <Action.CopyToClipboard content={urlString} shortcut={{ modifiers: ["cmd"], key: "." }} />
+          <Action
             title="Paste URL"
             icon={Icon.Clipboard}
             onAction={async () => {
@@ -236,12 +253,10 @@ export function URLItem({
             shortcut={{ modifiers: ["cmd"], key: "n" }}
           />
           <Action
-            icon={Icon.TwoArrowsClockwise}
-            title="Re-fetch URL"
-            shortcut={{ modifiers: ["cmd"], key: "r" }}
-            onAction={() => {
-              startCrawler();
-            }}
+            icon={Icon.Sidebar}
+            title={showDetail ? "Hide Detail" : "Show Detail"}
+            onAction={toggleDetail}
+            shortcut={{ modifiers: ["cmd", "opt"], key: showDetail ? "[" : "]" }}
           />
           <Action
             icon={Icon.Trash}
