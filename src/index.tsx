@@ -27,6 +27,9 @@ const getURLEntries = (pastedURL: URL) => {
 
 const useURL = (urlString: string) => {
   const pastedURL = useMemo(() => {
+    if (!urlString.startsWith("http")) {
+      return null;
+    }
     try {
       return new URL(urlString);
     } catch {
