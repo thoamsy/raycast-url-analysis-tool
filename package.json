@@ -2,9 +2,9 @@
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "url-util",
   "title": "URL Util",
-  "description": "检测 URL，并分析出 Path，Query",
+  "description": "Detect the URL and crawl the content inside to display it. It also displays the information of the Query and supports editing",
   "icon": "command-icon.png",
-  "author": "thoamsy",
+  "author": "thoamsy yang",
   "categories": [
     "Developer Tools"
   ],
@@ -18,7 +18,7 @@
     }
   ],
   "dependencies": {
-    "@raycast/api": "^1.34.1",
+    "@raycast/api": "^1.35.1",
     "cheerio": "^1.0.0-rc.10",
     "node-fetch": "^3.2.4"
   },
