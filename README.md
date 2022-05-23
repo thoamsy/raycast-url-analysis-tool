@@ -8,7 +8,7 @@ Just for Fun :0
 
 ## Screenshots
 
-![](screenshots/List%20View.png)
-![](screenshots/List-Detail%20View.png)
-![](screenshots/Query%20Meta.png)
-![](screenshots/Edit%20Query.png)
+![](screenshots/List%20View.jpg)
+![](screenshots/List-Detail%20View.jpg)
+![](screenshots/Query%20Meta.jpg)
+![](screenshots/Edit%20Query.jpg)
